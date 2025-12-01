@@ -3,7 +3,7 @@ rHelp Plugin - Text Documentation
 
 PLUGIN NAME: rHelp
 AUTHOR: Ftuoil Xelrash
-VERSION: 0.0.1
+VERSION: 0.0.40
 DESCRIPTION: Sends players a help message on join and provides a !help command with cooldown
 
 FEATURES:

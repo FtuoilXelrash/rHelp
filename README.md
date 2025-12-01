@@ -6,7 +6,7 @@ A Rust server plugin that sends players a welcome message on join and provides a
 
 - **Plugin Name:** rHelp
 - **Author:** Ftuoil Xelrash
-- **Version:** 0.0.1
+- **Version:** 0.0.40
 - **Description:** Displays help information and server commands on join and via !help command
 
 ## Features
@@ -137,3 +137,4 @@ oxide/config/rHelp.json
 - Global `DateTime` tracking for cooldown (matches rPop pattern)
 - JSON configuration file for easy editing
 - Proper cooldown time formatting (seconds/minutes/hours)
+- Fixed JSON deserialization issue that was causing duplicate message content in loaded configurations

@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("rHelp", "Ftuoil Xelrash", "0.0.30")]
+    [Info("rHelp", "Ftuoil Xelrash", "0.0.40")]
     [Description("Displays help information and server commands on join and via !help command")]
 
     public class rHelp : RustPlugin
@@ -65,7 +65,8 @@ namespace Oxide.Plugins
                 "/buyraid - Buy a private Raidable Base!",
                 "",
                 "SCHEDULED RESTARTS & WIPES:",
-                "!restart - Show server next scheduled restart in chat",
+                "!restart - Shows servers next scheduled restart in chat",
+                "!wipe(COMING SOON!) - Shows servers next scheduled wipe date/time in chat",                
                 "",
                 "SIGN ARTIST:",
                 "/sil <url> - Load image from URL onto sign you're looking at",
@@ -239,9 +240,6 @@ namespace Oxide.Plugins
 
                 processedContent.Add(processedLine);
             }
-
-            Puts($"DEBUG: config.Settings.HelpMessageContent.Count = {config.Settings.HelpMessageContent.Count}");
-            Puts($"DEBUG: processedContent.Count = {processedContent.Count}");
 
             // Build help message
             string headerLine = "=".PadRight(config.Settings.HelpMessageTitle.Length, '=');
