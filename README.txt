@@ -19,7 +19,7 @@ COMMANDS:
 
 CONFIGURATION:
 The plugin automatically creates a configuration file. You can customize:
-- Join message content (supports placeholders below)
+- Join message content (MULTI-LINE SUPPORTED - supports placeholders below)
 - Join message color (default: 00FFFF - dark blue)
 - Help message title and content (multi-line supported)
 - Help message color (default: FFFF00 - yellow)
@@ -36,11 +36,19 @@ The following variables can be used in the join message and will be automaticall
 - {sleeping_players} - Number of players sleeping
 - {player_count} - Formatted as "online/max" (e.g., "15/50")
 
-PLACEHOLDER EXAMPLES:
+SINGLE-LINE EXAMPLES:
 - "Welcome {player} to {server}!"
 - "Welcome {player}! Server is at {player_count} capacity."
 - "Welcome {player}! There are {online_players} players online."
 - "Join us {player}! {online_players}/{max_players} slots filled on {server}."
+
+MULTI-LINE EXAMPLE (in config JSON):
+"Join Message": [
+  "Welcome to the server {player}!",
+  "Type !help to see available commands and features available on {server}."
+]
+
+This will display as two separate lines in both chat and F1 console.
 
 INSTALLATION:
 1. Save rHelp.cs to your oxide/plugins/ directory

@@ -33,7 +33,7 @@ The plugin creates a configuration file automatically on first run. You can cust
 
 - **Enable !help Command** - Toggle the command on/off
 - **Command Cooldown (minutes)** - Set the cooldown duration
-- **Join Message** - Message shown when players connect (supports {player} and {server} placeholders)
+- **Join Message** - Multi-line message shown when players connect (supports placeholders)
 - **Join Message Color** - Color code for join message in chat (default: 00FFFF - dark blue)
 - **Send Join Message to Console** - Send join message to F1 console (default: true)
 - **Help Message - Title** - Title of the help guide
@@ -63,11 +63,21 @@ The join message supports the following placeholders that are automatically repl
 - `{sleeping_players}` - Number of players sleeping
 - `{player_count}` - Formatted as "online/max" (e.g., "15/50")
 
-**Examples:**
+**Single-Line Examples:**
 - `"Welcome {player} to {server}!"`
 - `"Welcome {player}! Server is at {player_count} capacity."`
 - `"Welcome {player}! There are {online_players} players online."`
 - `"Join us {player}! {online_players}/{max_players} slots filled on {server}."`
+
+**Multi-Line Example (as configured in JSON):**
+```json
+"Join Message": [
+  "Welcome to the server {player}!",
+  "Type !help to see available commands and features available on {server}."
+]
+```
+
+This will display as two separate lines in chat and console.
 
 ### Color Codes
 

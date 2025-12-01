@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("rHelp", "Ftuoil Xelrash", "0.0.1")]
+    [Info("rHelp", "Ftuoil Xelrash", "0.0.17")]
     [Description("Displays help information and server commands on join and via !help command")]
 
     public class rHelp : RustPlugin
@@ -27,9 +27,17 @@ namespace Oxide.Plugins
             [JsonProperty("Command Cooldown (minutes)")] public float CommandCooldown = 5f;
             [JsonProperty("Show Help Command Info in Join Message")] public bool ShowHelpInJoin = true;
 
-            [JsonProperty("Join Message")] public string JoinMessage = "Welcome to the server! Type !help to see available commands and features.";
+            [JsonProperty("Join Message")] public List<string> JoinMessage = new List<string>
+            {
+                "Welcome to the server {player}!",
+                "Type !help to see available commands and features available on {server}."
+            };
+            [JsonProperty("Join Message Color")] public string JoinMessageColor = "00FFFF";  // Dark Blue
+            [JsonProperty("Send Join Message to Console")] public bool SendJoinToConsole = true;
 
             [JsonProperty("Help Message - Title")] public string HelpMessageTitle = "Player Commands Guide";
+            [JsonProperty("Help Message Color")] public string HelpMessageColor = "FFFF00";  // Yellow
+            [JsonProperty("Send Help Message to Console")] public bool SendHelpToConsole = true;
 
             [JsonProperty("Help Message - Content")] public List<string> HelpMessageContent = new List<string>
             {
@@ -116,8 +124,46 @@ namespace Oxide.Plugins
             if (!config.Settings.EnableHelpCommand)
                 return;
 
-            // Send join message
-            player.Reply(config.Settings.JoinMessage);
+            // Get base player for console message
+            BasePlayer basePlayer = player.Object as BasePlayer;
+            if (basePlayer == null)
+                return;
+
+            // Replace placeholders in join message
+            string serverName = ConVar.Server.hostname ?? "Unknown Server";
+            int onlinePlayers = BasePlayer.activePlayerList.Count;
+            int maxPlayers = ConVar.Server.maxplayers;
+            int sleepingPlayers = BasePlayer.sleepingPlayerList.Count;
+
+            // Build multi-line join message
+            string joinMessage = "";
+            foreach (var line in config.Settings.JoinMessage)
+            {
+                string processedLine = line
+                    .Replace("{player}", player.Name)
+                    .Replace("{server}", serverName)
+                    .Replace("{online_players}", onlinePlayers.ToString())
+                    .Replace("{max_players}", maxPlayers.ToString())
+                    .Replace("{sleeping_players}", sleepingPlayers.ToString())
+                    .Replace("{player_count}", $"{onlinePlayers}/{maxPlayers}");
+
+                joinMessage += processedLine + "\n";
+            }
+
+            // Remove trailing newline
+            joinMessage = joinMessage.TrimEnd();
+
+            // Add color to message for chat
+            string coloredJoinMessage = $"<color=#{config.Settings.JoinMessageColor}>{joinMessage}</color>";
+
+            // Send to chat
+            basePlayer.ChatMessage(coloredJoinMessage);
+
+            // Send to console if enabled (plain text, no colors)
+            if (config.Settings.SendJoinToConsole)
+            {
+                basePlayer.ConsoleMessage(joinMessage);
+            }
         }
 
         private void OnPlayerChat(BasePlayer player, string message, ConVar.Chat.ChatChannel channel)
@@ -152,7 +198,7 @@ namespace Oxide.Plugins
 
             lastHelpCommandTime = now;
 
-            // Build and send help message
+            // Build help message
             string helpMessage = $"{config.Settings.HelpMessageTitle}\n";
             helpMessage += "=".PadRight(config.Settings.HelpMessageTitle.Length, '=') + "\n\n";
 
@@ -161,7 +207,17 @@ namespace Oxide.Plugins
                 helpMessage += line + "\n";
             }
 
-            player.ChatMessage(helpMessage);
+            // Add color for chat
+            string coloredHelpMessage = $"<color=#{config.Settings.HelpMessageColor}>{helpMessage}</color>";
+
+            // Send to chat
+            player.ChatMessage(coloredHelpMessage);
+
+            // Send to console if enabled
+            if (config.Settings.SendHelpToConsole)
+            {
+                player.ConsoleMessage(helpMessage);
+            }
         }
 
         private string GetCooldownTime(TimeSpan timeSpan)
