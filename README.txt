@@ -27,8 +27,8 @@ The plugin automatically creates a configuration file. You can customize:
 - Enable/disable console output for messages (F1 console)
 - Enable/disable features
 
-SUPPORTED PLACEHOLDERS (for join message):
-The following variables can be used in the join message and will be automatically replaced:
+SUPPORTED PLACEHOLDERS (for join AND help messages):
+The following variables can be used in BOTH the join message and help message and will be automatically replaced:
 - {player} - Name of the player joining
 - {server} - Server name (from server hostname setting)
 - {online_players} - Current number of online players
@@ -49,6 +49,16 @@ MULTI-LINE EXAMPLE (in config JSON):
 ]
 
 This will display as two separate lines in both chat and F1 console.
+
+HELP MESSAGE EXAMPLE WITH PLACEHOLDERS:
+"Help Message - Content": [
+  "Server: {server}",
+  "Players Online: {player_count}",
+  "",
+  "Welcome {player}!"
+]
+
+Placeholders work identically in help messages as they do in join messages.
 
 INSTALLATION:
 1. Save rHelp.cs to your oxide/plugins/ directory

@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("rHelp", "Ftuoil Xelrash", "0.0.17")]
+    [Info("rHelp", "Ftuoil Xelrash", "0.0.20")]
     [Description("Displays help information and server commands on join and via !help command")]
 
     public class rHelp : RustPlugin
@@ -26,12 +26,9 @@ namespace Oxide.Plugins
             [JsonProperty("Enable !help Command")] public bool EnableHelpCommand = true;
             [JsonProperty("Command Cooldown (minutes)")] public float CommandCooldown = 5f;
             [JsonProperty("Show Help Command Info in Join Message")] public bool ShowHelpInJoin = true;
+            [JsonProperty("Join Message Delay (seconds)")] public float JoinMessageDelay = 1f;
 
-            [JsonProperty("Join Message")] public List<string> JoinMessage = new List<string>
-            {
-                "Welcome to the server {player}!",
-                "Type !help to see available commands and features available on {server}."
-            };
+            [JsonProperty("Join Message")] public string JoinMessage = "Welcome to the server {player}!\nType !help to see available commands and features available on {server}.";
             [JsonProperty("Join Message Color")] public string JoinMessageColor = "00FFFF";  // Dark Blue
             [JsonProperty("Send Join Message to Console")] public bool SendJoinToConsole = true;
 
@@ -124,22 +121,22 @@ namespace Oxide.Plugins
             if (!config.Settings.EnableHelpCommand)
                 return;
 
-            // Get base player for console message
-            BasePlayer basePlayer = player.Object as BasePlayer;
-            if (basePlayer == null)
-                return;
-
-            // Replace placeholders in join message
-            string serverName = ConVar.Server.hostname ?? "Unknown Server";
-            int onlinePlayers = BasePlayer.activePlayerList.Count;
-            int maxPlayers = ConVar.Server.maxplayers;
-            int sleepingPlayers = BasePlayer.sleepingPlayerList.Count;
-
-            // Build multi-line join message
-            string joinMessage = "";
-            foreach (var line in config.Settings.JoinMessage)
+            timer.Once(config.Settings.JoinMessageDelay, () =>
             {
-                string processedLine = line
+                if (player == null || !player.IsConnected)
+                    return;
+
+                BasePlayer basePlayer = player.Object as BasePlayer;
+                if (basePlayer == null)
+                    return;
+
+                // Replace placeholders in join message
+                string serverName = ConVar.Server.hostname ?? "Unknown Server";
+                int onlinePlayers = BasePlayer.activePlayerList.Count;
+                int maxPlayers = ConVar.Server.maxplayers;
+                int sleepingPlayers = BasePlayer.sleepingPlayerList.Count;
+
+                string joinMessage = config.Settings.JoinMessage
                     .Replace("{player}", player.Name)
                     .Replace("{server}", serverName)
                     .Replace("{online_players}", onlinePlayers.ToString())
@@ -147,23 +144,18 @@ namespace Oxide.Plugins
                     .Replace("{sleeping_players}", sleepingPlayers.ToString())
                     .Replace("{player_count}", $"{onlinePlayers}/{maxPlayers}");
 
-                joinMessage += processedLine + "\n";
-            }
+                // Add color to message for chat
+                string coloredMessage = $"<color=#{config.Settings.JoinMessageColor}>{joinMessage}</color>";
 
-            // Remove trailing newline
-            joinMessage = joinMessage.TrimEnd();
+                // Send to chat using BasePlayer.ChatMessage
+                basePlayer.ChatMessage(coloredMessage);
 
-            // Add color to message for chat
-            string coloredJoinMessage = $"<color=#{config.Settings.JoinMessageColor}>{joinMessage}</color>";
-
-            // Send to chat
-            basePlayer.ChatMessage(coloredJoinMessage);
-
-            // Send to console if enabled (plain text, no colors)
-            if (config.Settings.SendJoinToConsole)
-            {
-                basePlayer.ConsoleMessage(joinMessage);
-            }
+                // Send to console if enabled (plain text, no colors)
+                if (config.Settings.SendJoinToConsole)
+                {
+                    basePlayer.ConsoleMessage(joinMessage);
+                }
+            });
         }
 
         private void OnPlayerChat(BasePlayer player, string message, ConVar.Chat.ChatChannel channel)
@@ -198,13 +190,27 @@ namespace Oxide.Plugins
 
             lastHelpCommandTime = now;
 
-            // Build help message
+            // Get placeholder values for help message
+            string serverName = ConVar.Server.hostname ?? "Unknown Server";
+            int onlinePlayers = BasePlayer.activePlayerList.Count;
+            int maxPlayers = ConVar.Server.maxplayers;
+            int sleepingPlayers = BasePlayer.sleepingPlayerList.Count;
+
+            // Build help message with placeholder replacement
             string helpMessage = $"{config.Settings.HelpMessageTitle}\n";
             helpMessage += "=".PadRight(config.Settings.HelpMessageTitle.Length, '=') + "\n\n";
 
             foreach (var line in config.Settings.HelpMessageContent)
             {
-                helpMessage += line + "\n";
+                string processedLine = line
+                    .Replace("{player}", player.displayName)
+                    .Replace("{server}", serverName)
+                    .Replace("{online_players}", onlinePlayers.ToString())
+                    .Replace("{max_players}", maxPlayers.ToString())
+                    .Replace("{sleeping_players}", sleepingPlayers.ToString())
+                    .Replace("{player_count}", $"{onlinePlayers}/{maxPlayers}");
+
+                helpMessage += processedLine + "\n";
             }
 
             // Add color for chat

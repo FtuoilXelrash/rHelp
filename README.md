@@ -54,7 +54,7 @@ All of these are fully customizable in the config file.
 
 ### String Placeholders
 
-The join message supports the following placeholders that are automatically replaced:
+Both the **join message** and **help message** support the following placeholders that are automatically replaced:
 
 - `{player}` - Name of the player joining
 - `{server}` - Server name (from server hostname setting)
@@ -78,6 +78,18 @@ The join message supports the following placeholders that are automatically repl
 ```
 
 This will display as two separate lines in chat and console.
+
+**Help Message Example with Placeholders:**
+```json
+"Help Message - Content": [
+  "Server: {server}",
+  "Players Online: {player_count}",
+  "",
+  "Welcome {player}!"
+]
+```
+
+Placeholders work the same way in help messages as they do in join messages.
 
 ### Color Codes
 
