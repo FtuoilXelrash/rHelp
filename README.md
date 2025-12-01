@@ -33,7 +33,7 @@ The plugin creates a configuration file automatically on first run. You can cust
 
 - **Enable !help Command** - Toggle the command on/off
 - **Command Cooldown (minutes)** - Set the cooldown duration
-- **Join Message** - Multi-line message shown when players connect (supports placeholders)
+- **Join Message** - Multi-line message list shown when players connect (supports placeholders)
 - **Join Message Color** - Color code for join message in chat (default: 00FFFF - dark blue)
 - **Send Join Message to Console** - Send join message to F1 console (default: true)
 - **Help Message - Title** - Title of the help guide

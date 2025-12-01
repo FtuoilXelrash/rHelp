@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("rHelp", "Ftuoil Xelrash", "0.0.20")]
+    [Info("rHelp", "Ftuoil Xelrash", "0.0.30")]
     [Description("Displays help information and server commands on join and via !help command")]
 
     public class rHelp : RustPlugin
@@ -15,10 +15,11 @@ namespace Oxide.Plugins
 
         private ConfigData config;
         private DateTime lastHelpCommandTime = DateTime.MinValue;
+        private DateTime lastHelpProcessed = DateTime.MinValue;
 
         public class ConfigData
         {
-            [JsonProperty("Settings")] public PluginSettings Settings = new PluginSettings();
+            [JsonProperty("Settings")] public PluginSettings Settings;
         }
 
         public class PluginSettings
@@ -28,25 +29,43 @@ namespace Oxide.Plugins
             [JsonProperty("Show Help Command Info in Join Message")] public bool ShowHelpInJoin = true;
             [JsonProperty("Join Message Delay (seconds)")] public float JoinMessageDelay = 1f;
 
-            [JsonProperty("Join Message")] public string JoinMessage = "Welcome to the server {player}!\nType !help to see available commands and features available on {server}.";
+            [JsonProperty("Join Message")] public List<string> JoinMessage;
             [JsonProperty("Join Message Color")] public string JoinMessageColor = "00FFFF";  // Dark Blue
-            [JsonProperty("Send Join Message to Console")] public bool SendJoinToConsole = true;
+            [JsonProperty("Send Join Message to Console")] public bool SendJoinToConsole = false;
 
             [JsonProperty("Help Message - Title")] public string HelpMessageTitle = "Player Commands Guide";
             [JsonProperty("Help Message Color")] public string HelpMessageColor = "FFFF00";  // Yellow
-            [JsonProperty("Send Help Message to Console")] public bool SendHelpToConsole = true;
+            [JsonProperty("Send Help Message to Console")] public bool SendHelpToConsole = false;
 
-            [JsonProperty("Help Message - Content")] public List<string> HelpMessageContent = new List<string>
+            [JsonProperty("Help Message - Content")] public List<string> HelpMessageContent;
+        }
+
+        private List<string> GetDefaultJoinMessage()
+        {
+            return new List<string>
+            {
+                "Welcome to the server {player}!",
+                "Type !help to see available commands and features available on {server}."
+            };
+        }
+
+        private List<string> GetDefaultHelpContent()
+        {
+            return new List<string>
             {
                 "",
-                "PLAYER STATS:",
-                "/stats - Check your current player stats",
-                "",
                 "ECONOMICS:",
-                "/balance - Check your current balance",
+                "/balance - Check your current Economics balance",
+                "",
+                "POPULATION:",
+                "!pop - Show server statistics in chat",
+                "  Online/sleeping players count",
                 "",
                 "RAIDABLE BASES:",
                 "/buyraid - Buy a private Raidable Base!",
+                "",
+                "SCHEDULED RESTARTS & WIPES:",
+                "!restart - Show server next scheduled restart in chat",
                 "",
                 "SIGN ARTIST:",
                 "/sil <url> - Load image from URL onto sign you're looking at",
@@ -54,31 +73,20 @@ namespace Oxide.Plugins
                 "  Add raw for raw format",
                 "/silt <message> - Create text on signs",
                 "  Example: /silt Hello World",
-                "  Optional: font size, colors, background",
                 "/silrestore - Restore sign to original texture",
-                "Multi-texture signs (shop fronts):",
-                "  /sil <1-4> <url> - Load to specific texture",
-                "  /silt <1-4> <message> - Text to specific texture",
                 "",
-                "POPULATION:",
-                "!pop - Show server statistics in chat",
-                "  Online/sleeping players count",
-                "  Has cooldown between uses",
-                "",
-                "SCHEDULED RESTARTS & WIPES:",
-                "!restart - Show server next scheduled restart in chat",
-                "  Has cooldown between uses",
-                "",
-                "QUICK TIPS:",
-                "- Check /balance before buying raids",
-                "- Use !pop to see server activity",
-                "- Practice /silt on wooden signs"
+                "PLAYER STATS:",
+                "/stats - Check your current player stats",
+                ""
             };
         }
 
         protected override void LoadDefaultConfig()
         {
             config = new ConfigData();
+            config.Settings = new PluginSettings();
+            config.Settings.JoinMessage = GetDefaultJoinMessage();
+            config.Settings.HelpMessageContent = GetDefaultHelpContent();
             SaveConfig();
             Puts("Default configuration created.");
         }
@@ -89,11 +97,15 @@ namespace Oxide.Plugins
             try
             {
                 config = Config.ReadObject<ConfigData>();
-                if (config == null)
+                if (config == null || config.Settings == null)
                 {
                     LoadDefaultConfig();
                     return;
                 }
+                if (config.Settings.JoinMessage == null)
+                    config.Settings.JoinMessage = GetDefaultJoinMessage();
+                if (config.Settings.HelpMessageContent == null)
+                    config.Settings.HelpMessageContent = GetDefaultHelpContent();
             }
             catch (Exception ex)
             {
@@ -121,22 +133,23 @@ namespace Oxide.Plugins
             if (!config.Settings.EnableHelpCommand)
                 return;
 
-            timer.Once(config.Settings.JoinMessageDelay, () =>
+            BasePlayer basePlayer = player.Object as BasePlayer;
+            if (basePlayer == null)
+                return;
+
+            // Replace placeholders in join message
+            string serverName = ConVar.Server.hostname ?? "Unknown Server";
+            int onlinePlayers = BasePlayer.activePlayerList.Count;
+            int maxPlayers = ConVar.Server.maxplayers;
+            int sleepingPlayers = BasePlayer.sleepingPlayerList.Count;
+
+            // Build the full join message from all lines
+            string fullJoinMessage = "";
+            string consoleJoinMessage = "";
+
+            foreach (var line in config.Settings.JoinMessage)
             {
-                if (player == null || !player.IsConnected)
-                    return;
-
-                BasePlayer basePlayer = player.Object as BasePlayer;
-                if (basePlayer == null)
-                    return;
-
-                // Replace placeholders in join message
-                string serverName = ConVar.Server.hostname ?? "Unknown Server";
-                int onlinePlayers = BasePlayer.activePlayerList.Count;
-                int maxPlayers = ConVar.Server.maxplayers;
-                int sleepingPlayers = BasePlayer.sleepingPlayerList.Count;
-
-                string joinMessage = config.Settings.JoinMessage
+                string processedLine = line
                     .Replace("{player}", player.Name)
                     .Replace("{server}", serverName)
                     .Replace("{online_players}", onlinePlayers.ToString())
@@ -144,24 +157,40 @@ namespace Oxide.Plugins
                     .Replace("{sleeping_players}", sleepingPlayers.ToString())
                     .Replace("{player_count}", $"{onlinePlayers}/{maxPlayers}");
 
-                // Add color to message for chat
-                string coloredMessage = $"<color=#{config.Settings.JoinMessageColor}>{joinMessage}</color>";
+                fullJoinMessage += processedLine + "\n";
+                consoleJoinMessage += processedLine + "\n";
+            }
 
-                // Send to chat using BasePlayer.ChatMessage
-                basePlayer.ChatMessage(coloredMessage);
+            // Remove trailing newline
+            fullJoinMessage = fullJoinMessage.TrimEnd();
+            consoleJoinMessage = consoleJoinMessage.TrimEnd();
 
-                // Send to console if enabled (plain text, no colors)
-                if (config.Settings.SendJoinToConsole)
-                {
-                    basePlayer.ConsoleMessage(joinMessage);
-                }
-            });
+            // Add color to message for chat
+            string coloredMessage = $"<color=#{config.Settings.JoinMessageColor}>{fullJoinMessage}</color>";
+
+            // Send to chat as one message
+            basePlayer.ChatMessage(coloredMessage);
+
+            // Send to console if enabled (plain text, no colors)
+            if (config.Settings.SendJoinToConsole)
+            {
+                basePlayer.ConsoleMessage(consoleJoinMessage);
+            }
         }
 
         private void OnPlayerChat(BasePlayer player, string message, ConVar.Chat.ChatChannel channel)
         {
+            if (player == null || string.IsNullOrEmpty(message))
+                return;
+
             if (message.ToLower() == "!help")
             {
+                var now = DateTime.Now;
+                // Skip if processed within last 10ms
+                if ((now - lastHelpProcessed).TotalMilliseconds < 10)
+                    return;
+                lastHelpProcessed = now;
+
                 HandleHelpCommand(player);
             }
         }
@@ -196,10 +225,8 @@ namespace Oxide.Plugins
             int maxPlayers = ConVar.Server.maxplayers;
             int sleepingPlayers = BasePlayer.sleepingPlayerList.Count;
 
-            // Build help message with placeholder replacement
-            string helpMessage = $"{config.Settings.HelpMessageTitle}\n";
-            helpMessage += "=".PadRight(config.Settings.HelpMessageTitle.Length, '=') + "\n\n";
-
+            // Process content lines with placeholder replacement
+            var processedContent = new List<string>();
             foreach (var line in config.Settings.HelpMessageContent)
             {
                 string processedLine = line
@@ -210,19 +237,27 @@ namespace Oxide.Plugins
                     .Replace("{sleeping_players}", sleepingPlayers.ToString())
                     .Replace("{player_count}", $"{onlinePlayers}/{maxPlayers}");
 
-                helpMessage += processedLine + "\n";
+                processedContent.Add(processedLine);
             }
+
+            Puts($"DEBUG: config.Settings.HelpMessageContent.Count = {config.Settings.HelpMessageContent.Count}");
+            Puts($"DEBUG: processedContent.Count = {processedContent.Count}");
+
+            // Build help message
+            string headerLine = "=".PadRight(config.Settings.HelpMessageTitle.Length, '=');
+            string helpMessage = config.Settings.HelpMessageTitle + "\n" + headerLine + "\n\n" + string.Join("\n", processedContent);
+            string consoleHelpMessage = config.Settings.HelpMessageTitle + "\n" + headerLine + "\n\n" + string.Join("\n", processedContent);
 
             // Add color for chat
             string coloredHelpMessage = $"<color=#{config.Settings.HelpMessageColor}>{helpMessage}</color>";
 
-            // Send to chat
+            // Send to chat as one message
             player.ChatMessage(coloredHelpMessage);
 
-            // Send to console if enabled
+            // Send to console if enabled (plain text, no colors)
             if (config.Settings.SendHelpToConsole)
             {
-                player.ConsoleMessage(helpMessage);
+                player.ConsoleMessage(consoleHelpMessage);
             }
         }
 

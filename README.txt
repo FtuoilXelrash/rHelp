@@ -19,7 +19,7 @@ COMMANDS:
 
 CONFIGURATION:
 The plugin automatically creates a configuration file. You can customize:
-- Join message content (MULTI-LINE SUPPORTED - supports placeholders below)
+- Join message content (multi-line list, supports placeholders below)
 - Join message color (default: 00FFFF - dark blue)
 - Help message title and content (multi-line supported)
 - Help message color (default: FFFF00 - yellow)
