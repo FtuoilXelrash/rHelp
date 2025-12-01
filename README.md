@@ -33,8 +33,12 @@ The plugin creates a configuration file automatically on first run. You can cust
 
 - **Enable !help Command** - Toggle the command on/off
 - **Command Cooldown (minutes)** - Set the cooldown duration
-- **Join Message** - Message shown when players connect
+- **Join Message** - Message shown when players connect (supports {player} and {server} placeholders)
+- **Join Message Color** - Color code for join message in chat (default: 00FFFF - dark blue)
+- **Send Join Message to Console** - Send join message to F1 console (default: true)
 - **Help Message - Title** - Title of the help guide
+- **Help Message Color** - Color code for help message in chat (default: FFFF00 - yellow)
+- **Send Help Message to Console** - Send help message to F1 console (default: true)
 - **Help Message - Content** - Multi-line list of commands and info
 
 ### Default Help Message Includes:
@@ -47,6 +51,41 @@ The plugin creates a configuration file automatically on first run. You can cust
 - Quick Tips
 
 All of these are fully customizable in the config file.
+
+### String Placeholders
+
+The join message supports the following placeholders that are automatically replaced:
+
+- `{player}` - Name of the player joining
+- `{server}` - Server name (from server hostname setting)
+- `{online_players}` - Current number of online players
+- `{max_players}` - Maximum player capacity
+- `{sleeping_players}` - Number of players sleeping
+- `{player_count}` - Formatted as "online/max" (e.g., "15/50")
+
+**Examples:**
+- `"Welcome {player} to {server}!"`
+- `"Welcome {player}! Server is at {player_count} capacity."`
+- `"Welcome {player}! There are {online_players} players online."`
+- `"Join us {player}! {online_players}/{max_players} slots filled on {server}."`
+
+### Color Codes
+
+Colors are specified as hex codes (without the # symbol). Some examples:
+- `00FFFF` - Cyan (dark blue)
+- `FFFF00` - Yellow
+- `FF0000` - Red
+- `00FF00` - Green
+- `FFFFFF` - White
+- `FFA500` - Orange
+
+The full message will be displayed in the specified color in chat.
+
+### Console Messages
+
+Both join and help messages can be sent to the F1 console for easier reading. This is enabled by default and can be toggled in the config:
+- `Send Join Message to Console` - (default: true)
+- `Send Help Message to Console` - (default: true)
 
 ## Installation
 
