@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("rHelp", "Ftuoil Xelrash", "0.0.40")]
+    [Info("rHelp", "Ftuoil Xelrash", "0.0.42")]
     [Description("Displays help information and server commands on join and via !help command")]
 
     public class rHelp : RustPlugin
@@ -194,6 +194,12 @@ namespace Oxide.Plugins
 
                 HandleHelpCommand(player);
             }
+        }
+
+        [ChatCommand("help")]
+        private void HelpSlashCommand(BasePlayer player, string command, string[] args)
+        {
+            HandleHelpCommand(player);
         }
 
         #endregion
