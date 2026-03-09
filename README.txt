@@ -3,20 +3,21 @@ rHelp Plugin - Text Documentation
 
 PLUGIN NAME: rHelp
 AUTHOR: Ftuoil Xelrash
-VERSION: 0.0.42
-DESCRIPTION: Sends players a help message on join and provides !help and /help commands with shared cooldown
+VERSION: 0.0.43
+DESCRIPTION: Sends players a help message on join and provides !help and /help commands with per-player cooldown
 
 FEATURES:
 - Welcome message sent to players when they join the server
 - Informs players about the !help command
 - !help command displays configurable help information
-- Global 5-minute cooldown on !help command
-- Private messages (only player and server see them)
+- Per-player 5-minute cooldown on !help and /help commands (each player tracks independently)
+- Both !help and /help are silent - not visible to other players in chat
+- Help messages are private (only visible to the player who issued the command)
 - Multi-line message support in configuration
 
 COMMANDS:
-- !help - Shows the help message (5 minute global cooldown)
-- /help - Alias for !help, identical behaviour, shares the same cooldown timer
+- !help - Shows the help message (5 minute per-player cooldown, silent to other players)
+- /help - Alias for !help, identical behaviour, shares the same per-player cooldown timer
 
 CONFIGURATION:
 The plugin automatically creates a configuration file. You can customize:
@@ -68,5 +69,6 @@ INSTALLATION:
 
 NOTES:
 - Messages should use plain text only (Rust limitations)
-- Cooldown is global - all players share the same 5 minute timer across both !help and /help
+- Cooldown is per-player - each player has their own independent 5 minute timer for !help and /help
+- Neither !help nor /help is visible to other players in chat (both are fully silent)
 - Help messages are shown only to the player who runs the command

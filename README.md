@@ -1,19 +1,19 @@
 # rHelp Plugin
 
-A Rust server plugin that sends players a welcome message on join and provides a configurable help command with a global cooldown.
+A Rust server plugin that sends players a welcome message on join and provides a configurable help command with a per-player cooldown.
 
 ## Details
 
 - **Plugin Name:** rHelp
 - **Author:** Ftuoil Xelrash
-- **Version:** 0.0.42
+- **Version:** 0.0.43
 - **Description:** Displays help information and server commands on join and via !help / /help commands
 
 ## Features
 
 - **Welcome Message** - Automatically sent to players when they join the server
 - **Help Command** - Players can type `!help` or `/help` to view available server commands
-- **Global 5-Minute Cooldown** - Prevents spam; all players share the same cooldown timer
+- **Per-Player 5-Minute Cooldown** - Prevents spam; each player has their own independent cooldown timer
 - **Private Messages** - Help responses are sent only to the player who requested them
 - **Multi-line Configuration** - Easy-to-edit help message content in the config file
 - **Plain Text Format** - Compatible with Rust's text limitations
@@ -21,11 +21,12 @@ A Rust server plugin that sends players a welcome message on join and provides a
 ## Commands
 
 ### !help / /help
-Shows the Player Commands Guide with all available server commands and features. Both commands are identical in behaviour and share the same cooldown timer.
+Shows the Player Commands Guide with all available server commands and features. Both commands are identical in behaviour and share the same per-player cooldown timer.
 
-- **Cooldown:** 5 minutes (global, shared between both commands)
+- **Cooldown:** 5 minutes (per-player; each player tracks their own cooldown independently)
+- **Silent:** Neither `!help` nor `/help` is visible to other players in chat
 - **Permission:** None required (available to all players)
-- **Output:** Private message (only visible to the player)
+- **Output:** Private message (only visible to the player who issued it)
 
 ## Configuration
 
@@ -126,16 +127,17 @@ oxide/config/rHelp.json
 ## Notes
 
 - Messages should use plain text only (Rust has limitations with special characters)
-- The cooldown is **global** - once the !help command is used, all players must wait 5 minutes
+- The cooldown is **per-player** - each player has their own independent 5-minute cooldown timer
+- Neither `!help` nor `/help` is visible to other players in chat (both are fully silent)
 - Join messages appear as private messages to each connecting player
 - The help message can be as long as needed with multiple lines
 
 ## Technical Details
 
 - Uses `OnUserConnected` hook for join messages
-- Uses `OnPlayerChat` hook to detect `!help` commands
+- Uses `OnPlayerChat` hook to detect `!help` commands; returns non-null to suppress from public chat
 - Uses `[ChatCommand("help")]` for `/help` slash command alias
-- Global `DateTime` tracking for cooldown (matches rPop pattern)
+- Per-player `Dictionary<string, DateTime>` tracking for cooldown, keyed by `UserIDString`
 - JSON configuration file for easy editing
 - Proper cooldown time formatting (seconds/minutes/hours)
 - Fixed JSON deserialization issue that was causing duplicate message content in loaded configurations

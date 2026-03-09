@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("rHelp", "Ftuoil Xelrash", "0.0.42")]
+    [Info("rHelp", "Ftuoil Xelrash", "0.0.43")]
     [Description("Displays help information and server commands on join and via !help command")]
 
     public class rHelp : RustPlugin
@@ -14,8 +14,7 @@ namespace Oxide.Plugins
         #region Configuration
 
         private ConfigData config;
-        private DateTime lastHelpCommandTime = DateTime.MinValue;
-        private DateTime lastHelpProcessed = DateTime.MinValue;
+        private Dictionary<string, DateTime> playerCooldowns = new Dictionary<string, DateTime>();
 
         public class ConfigData
         {
@@ -179,21 +178,18 @@ namespace Oxide.Plugins
             }
         }
 
-        private void OnPlayerChat(BasePlayer player, string message, ConVar.Chat.ChatChannel channel)
+        private object OnPlayerChat(BasePlayer player, string message, ConVar.Chat.ChatChannel channel)
         {
             if (player == null || string.IsNullOrEmpty(message))
-                return;
+                return null;
 
             if (message.ToLower() == "!help")
             {
-                var now = DateTime.Now;
-                // Skip if processed within last 10ms
-                if ((now - lastHelpProcessed).TotalMilliseconds < 10)
-                    return;
-                lastHelpProcessed = now;
-
                 HandleHelpCommand(player);
+                return true; // suppress from public chat
             }
+
+            return null;
         }
 
         [ChatCommand("help")]
@@ -215,16 +211,20 @@ namespace Oxide.Plugins
             }
 
             var now = DateTime.Now;
-            var timeSinceLastUse = now - lastHelpCommandTime;
+            string playerId = player.UserIDString;
 
-            if (timeSinceLastUse.TotalMinutes < config.Settings.CommandCooldown)
+            if (playerCooldowns.TryGetValue(playerId, out DateTime lastUse))
             {
-                var remainingTime = TimeSpan.FromMinutes(config.Settings.CommandCooldown) - timeSinceLastUse;
-                player.ChatMessage($"Help command is on cooldown. Try again in {GetCooldownTime(remainingTime)}.");
-                return;
+                var timeSinceLastUse = now - lastUse;
+                if (timeSinceLastUse.TotalMinutes < config.Settings.CommandCooldown)
+                {
+                    var remainingTime = TimeSpan.FromMinutes(config.Settings.CommandCooldown) - timeSinceLastUse;
+                    player.ChatMessage($"Help command is on cooldown. Try again in {GetCooldownTime(remainingTime)}.");
+                    return;
+                }
             }
 
-            lastHelpCommandTime = now;
+            playerCooldowns[playerId] = now;
 
             // Get placeholder values for help message
             string serverName = ConVar.Server.hostname ?? "Unknown Server";
