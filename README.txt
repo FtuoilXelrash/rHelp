@@ -1,9 +1,9 @@
-rHelp Plugin - Text Documentation
-==================================
+Rust Player Help Plugin - Text Documentation
+============================================
 
-PLUGIN NAME: rHelp
+PLUGIN NAME: Rust Player Help
 AUTHOR: Ftuoil Xelrash
-VERSION: 0.0.43
+VERSION: 1.0.5
 DESCRIPTION: Sends players a help message on join and provides !help and /help commands with per-player cooldown
 
 FEATURES:

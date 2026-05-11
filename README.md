@@ -1,12 +1,12 @@
-# rHelp Plugin
+# Rust Player Help Plugin
 
 A Rust server plugin that sends players a welcome message on join and provides a configurable help command with a per-player cooldown.
 
 ## Details
 
-- **Plugin Name:** rHelp
+- **Plugin Name:** Rust Player Help
 - **Author:** Ftuoil Xelrash
-- **Version:** 0.0.43
+- **Version:** 1.0.5
 - **Description:** Displays help information and server commands on join and via !help / /help commands
 
 ## Features

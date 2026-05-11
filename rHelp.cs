@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Oxide.Plugins
 {
-    [Info("rHelp", "Ftuoil Xelrash", "0.0.43")]
+    [Info("Rust Player Help", "Ftuoil Xelrash", "1.0.5")]
     [Description("Displays help information and server commands on join and via !help command")]
 
     public class rHelp : RustPlugin
